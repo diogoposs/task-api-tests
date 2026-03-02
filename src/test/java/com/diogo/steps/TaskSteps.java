@@ -3,6 +3,7 @@ package com.diogo.steps;
 import com.diogo.service.TaskService;
 import io.cucumber.java.en.*;
 import io.restassured.response.Response;
+import com.diogo.database.DatabaseUtils;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,36 +13,45 @@ public class TaskSteps {
     Response response;
     int taskId;
 
-    @Given("que eu criei uma tarefa com titulo {string}")
-    @When("eu crio uma tarefa com titulo {string}")
-    public void criarTarefa(String titulo) {
-        response = taskService.createTask(titulo);
+    @Given("I have created a task with title {string}")
+    @When("I create a task with title {string}")
+    public void createTask(String title) {
+        response = taskService.createTask(title);
         taskId = response.jsonPath().getInt("id");
     }
 
-    @When("eu busco a tarefa pelo id")
-    public void buscarTarefa() {
+    @When("I retrieve the task by id")
+    public void getTaskById() {
         response = taskService.getTaskById(taskId);
     }
 
-    @When("eu atualizo a tarefa para titulo {string}")
-    public void atualizarTarefa(String novoTitulo) {
-        response = taskService.updateTask(taskId, novoTitulo);
+    @When("I update the task title to {string}")
+    public void updateTask(String newTitle) {
+        response = taskService.updateTask(taskId, newTitle);
     }
 
-    @When("eu deleto a tarefa pelo id")
-    public void deletarTarefa() {
+    @When("I delete the task by id")
+    public void deleteTask() {
         response = taskService.deleteTask(taskId);
     }
 
-    @Then("o status da resposta deve ser {int}")
-    public void validarStatus(int statusCode) {
+    @Then("the response status should be {int}")
+    public void validateStatus(int statusCode) {
         assertEquals(statusCode, response.getStatusCode());
     }
 
-    @Then("o campo {string} deve ser {string}")
-    public void validarCampo(String campo, String valorEsperado) {
-        String valorAtual = response.jsonPath().getString(campo);
-        assertEquals(valorEsperado, valorAtual);
+    @Then("the field {string} should be {string}")
+    public void validateField(String field, String expectedValue) {
+        String actualValue = response.jsonPath().getString(field);
+        assertEquals(expectedValue, actualValue);
+    }
+
+    @Then("the task should exist in the database")
+    public void validateTaskInDatabase() throws Exception {
+
+        String titleFromDatabase = DatabaseUtils.getTaskTitleById(taskId);
+
+        assertNotNull(titleFromDatabase);
+        assertEquals(response.jsonPath().getString("title"), titleFromDatabase);
     }
 }
